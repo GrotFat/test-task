@@ -21,6 +21,7 @@ resource "tls_private_key" "rsa" {
 resource "local_file" "tfkey" {
     content  = tls_private_key.rsa.private_key_pem
     filename = "tfkey"
+    file_permission = "0400"
 }
 
 resource "aws_eip" "eip" {
