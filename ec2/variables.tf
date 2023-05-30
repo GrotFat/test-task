@@ -9,3 +9,6 @@ variable "ami" {
 variable "grafana_port" {
   description = "The port to expose Grafana."
 }
+variable "vpc_id" {
+  description = "The vpc id for your instance"
+}

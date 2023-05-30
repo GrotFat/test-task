@@ -1,7 +1,7 @@
 resource "aws_instance" "web" {
-  ami           = var.ami
-  instance_type = var.instance_type
-  key_name   = "tfkey"
+  ami             = var.ami
+  instance_type   = var.instance_type
+  key_name        = "tfkey"
   security_groups = [aws_security_group.TF_SG.name]
   tags = {
     Name = "TerraformGraf"
@@ -19,9 +19,9 @@ resource "tls_private_key" "rsa" {
 }
 
 resource "local_file" "tfkey" {
-    content  = tls_private_key.rsa.private_key_pem
-    filename = "tfkey"
-    file_permission = "0400"
+  content         = tls_private_key.rsa.private_key_pem
+  filename        = "tfkey"
+  file_permission = "0400"
 }
 
 resource "aws_eip" "eip" {
@@ -36,7 +36,7 @@ resource "aws_eip_association" "eip-association" {
 resource "aws_security_group" "TF_SG" {
   name        = "SG for Terraform"
   description = "security group for Terraform"
-  vpc_id      = "vpc-08023aefa7364b94a"
+  vpc_id      = var.vpc_id
 
   ingress {
     description      = "HTTPS"
@@ -64,7 +64,7 @@ resource "aws_security_group" "TF_SG" {
     cidr_blocks      = ["0.0.0.0/0"]
     ipv6_cidr_blocks = ["::/0"]
   }
-   ingress {
+  ingress {
     description      = "HTTP"
     from_port        = 3000
     to_port          = 3000
@@ -87,23 +87,24 @@ resource "aws_security_group" "TF_SG" {
 }
 
 resource "null_resource" "docker_install" {
-    connection {
-      host = aws_eip.eip.public_ip
-      type = "ssh"
-      user = "ec2-user"
-      agent = false
-      private_key = tls_private_key.rsa.private_key_pem
-    }
+  connection {
+    host        = aws_eip.eip.public_ip
+    type        = "ssh"
+    user        = "ec2-user"
+    agent       = false
+    private_key = tls_private_key.rsa.private_key_pem
+  }
 
+  provisioner "remote-exec" {
+    inline = [
+      "sudo yum update -y",
+      "sudo yum install -y docker",
+      "sudo service docker start",
+      "sudo usermod -aG docker ec2-user",
+      "sudo systemctl enable docker",
+      "sudo docker run -d -p 3000:${var.grafana_port} --name grafana grafana/grafana"
+    ]
+  }
 
-    provisioner "remote-exec" {
-        inline = [
-        "sudo yum update -y",
-        "sudo yum install -y docker",
-        "sudo service docker start",
-        "sudo usermod -aG docker ec2-user",
-        "sudo systemctl enable docker",
-        "sudo docker run -d -p 3000:${var.grafana_port} --name grafana grafana/grafana"
-        ]
-    }
+  depends_on = [aws_instance.web, aws_eip.eip, tls_private_key.rsa]
 }

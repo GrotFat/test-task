@@ -6,4 +6,5 @@ module "test-task" {
   instance_type = "t2.micro"
   ami = "ami-07151644aeb34558a"
   grafana_port = 3000
+  vpc_id = var.vpc_id
 }
