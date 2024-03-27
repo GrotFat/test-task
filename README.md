@@ -1,4 +1,4 @@
-# Artem Herbovnyk | Trainee DevOps Test Task
+# Artem Herbovnyk | DevOps Test Task
 Example of terraform module to setup EC2 instance with public static IP and Grafana docker image
 
 AWS creds are consumed from env variables
